@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/home_48px"
+        android:title="Home" />
+    <item
+        android:id="@+id/deckFragment"
+        android:icon="@drawable/playing_cards_48px"
+        android:title="Decks" />
+    <item
+        android:id="@+id/shareFragment"
+        android:icon="@drawable/share_48px"
+        android:title="Share" />
+</menu>
