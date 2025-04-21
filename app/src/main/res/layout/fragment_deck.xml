@@ -16,30 +16,23 @@
             android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/primaryColor">
+            android:background="@color/primaryColor"
+            android:elevation="0dp">
 
-            <com.google.android.material.appbar.CollapsingToolbarLayout
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_scrollFlags="scroll|enterAlways"
-                app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Title"
-                app:collapsedTitleTextAppearance="@style/TextAppearance.AppCompat.Title"
-                app:title="My Decks">
-
-                <androidx.appcompat.widget.Toolbar
-                    android:id="@+id/toolbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
-                    app:titleTextColor="#1E88E5" />
-            </com.google.android.material.appbar.CollapsingToolbarLayout>
+                android:layout_height="?attr/actionBarSize"
+                app:title="My Decks"
+                app:titleTextColor="@color/white" />
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tabLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:tabTextColor="@color/white"
-                app:tabSelectedTextColor="@color/white"
-                app:tabIndicatorColor="@color/white"
+                app:tabTextColor="@color/primaryColor"
+                app:tabSelectedTextColor="@color/primaryColor"
+                app:tabIndicatorColor="@color/primaryColor"
                 app:tabMode="fixed">
 
                 <com.google.android.material.tabs.TabItem

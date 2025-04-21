@@ -16,8 +16,17 @@
             android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/primaryColor" />
+            android:background="@color/primaryColor"
+            android:elevation="0dp">
 
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:title="Share"
+                app:titleTextColor="@color/white" />
+
+        </com.google.android.material.appbar.AppBarLayout>
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -66,6 +75,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
+                            app:strokeColor="@color/primaryColor"
+                            android:textColor="@color/primaryColor"
                             android:text="Select Deck" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -107,6 +118,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
+                            app:boxStrokeColor="@color/primaryColor"
+                            app:hintTextColor="@color/primaryColor"
                             android:hint="Enter deck code">
 
                             <com.google.android.material.textfield.TextInputEditText
@@ -121,6 +134,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
+                            android:backgroundTint="@color/primaryColor"
                             android:text="Import" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -170,6 +184,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
+                            app:strokeColor="@color/primaryColor"
+                            android:textColor="@color/primaryColor"
                             android:text="Scan QR Code" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -190,17 +206,32 @@
                     android:layout_marginTop="8dp"
                     android:nestedScrollingEnabled="false" />
 
-                <TextView
-                    android:id="@+id/noRecentImportsText"
-                    android:layout_width="match_parent"
+                <LinearLayout
+                    android:id="@+id/emptyStateContainer"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="No recently imported decks"
-                    android:textAlignment="center"
-                    android:visibility="gone" />
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:layout_marginTop="24dp">
 
+                    <ImageView
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:src="@drawable/playing_cards_48px"
+                        android:alpha="0.5"
+                        android:contentDescription="No imports icon" />
+
+                    <TextView
+                        android:id="@+id/noRecentImportsText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp"
+                        android:text="No recently imported decks"
+                        android:textAlignment="center" />
+                </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
 </FrameLayout>
