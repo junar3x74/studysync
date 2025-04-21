@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragments.DeckFragment">
 
-    <?xml version="1.0" encoding="utf-8"?>
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/white"
-        tools:context=".fragments.DeckFragment">
+        android:background="@color/white">
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appBarLayout"
@@ -33,7 +30,7 @@
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    app:titleTextColor="@color/white" />
+                    app:titleTextColor="#1E88E5" />
             </com.google.android.material.appbar.CollapsingToolbarLayout>
 
             <com.google.android.material.tabs.TabLayout
@@ -69,14 +66,14 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/searchLayout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:layout_constraintTop_toTopOf="parent"
                 app:startIconDrawable="@android:drawable/ic_menu_search"
                 app:endIconMode="clear_text"
-                android:hint="Search decks">
+                android:hint="Search decks"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/searchInput"
@@ -101,6 +98,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
                 android:src="@drawable/add_48px"
+                android:contentDescription="Add deck"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 

@@ -21,13 +21,6 @@
             android:background="@color/primaryColor"
             android:elevation="0dp">
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:title="StudySync"
-                app:titleTextColor="@color/white"
-                app:menu="@menu/toolbar_menu" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -174,6 +167,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
                 android:src="@drawable/add_48px"
+                android:contentDescription="create new deck"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 

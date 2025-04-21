@@ -1,33 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragments.ShareFragment">
 
-    <?xml version="1.0" encoding="utf-8"?>
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/white"
-        tools:context=".fragments.ShareFragment">
+        android:background="@color/white">
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/primaryColor">
-
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:title="Share Decks"
-                app:titleTextColor="@color/white" />
-        </com.google.android.material.appbar.AppBarLayout>
+            android:background="@color/primaryColor" />
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -40,15 +29,16 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
+                <!-- Share My Deck Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/shareMyDeckCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp"
-                    android:layout_marginBottom="16dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
+                    app:strokeColor="#E0E0E0"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -60,35 +50,36 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Share Your Deck"
+                            android:textColor="@color/black"
                             android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/black"/>
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Select a deck to share with others"
-                            android:layout_marginTop="8dp"/>
+                            android:layout_marginTop="8dp"
+                            android:text="Select a deck to share with others" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/selectDeckToShareButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Select Deck"
                             android:layout_marginTop="16dp"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                            android:text="Select Deck" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Import Deck Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/importDeckCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp"
-                    android:layout_marginBottom="16dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
+                    app:strokeColor="#E0E0E0"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -100,49 +91,50 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Import Deck"
+                            android:textColor="@color/black"
                             android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/black"/>
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Import a deck shared with you using a code"
-                            android:layout_marginTop="8dp"/>
+                            android:layout_marginTop="8dp"
+                            android:text="Import a deck shared with you using a code" />
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/deckCodeInputLayout"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="16dp"
-                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:hint="Enter deck code">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/deckCodeInput"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="text"/>
+                                android:inputType="text" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/importDeckButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Import"
-                            android:layout_marginTop="16dp"/>
+                            android:layout_marginTop="16dp"
+                            android:text="Import" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Scan QR Code Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/scanQrCodeCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="4dp"
-                    android:layout_marginBottom="16dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E0E0E0">
+                    app:strokeColor="#E0E0E0"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -154,57 +146,59 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Scan QR Code"
+                            android:textColor="@color/black"
                             android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/black"/>
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Scan a QR code to import a shared deck"
-                            android:layout_marginTop="8dp"/>
+                            android:layout_marginTop="8dp"
+                            android:text="Scan a QR code to import a shared deck" />
 
                         <ImageView
                             android:layout_width="100dp"
                             android:layout_height="100dp"
-                            android:src="@android:drawable/ic_menu_camera"
                             android:layout_gravity="center"
                             android:layout_marginTop="16dp"
-                            android:contentDescription="Camera icon"/>
+                            android:contentDescription="Camera icon"
+                            android:src="@android:drawable/ic_menu_camera" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/scanQrCodeButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Scan QR Code"
                             android:layout_marginTop="16dp"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                            android:text="Scan QR Code" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Recently Imported -->
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:text="Recently Imported"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="16dp"/>
+                    android:textStyle="bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recentImportsRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:nestedScrollingEnabled="false"/>
+                    android:nestedScrollingEnabled="false" />
 
                 <TextView
                     android:id="@+id/noRecentImportsText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:padding="16dp"
                     android:text="No recently imported decks"
                     android:textAlignment="center"
-                    android:padding="16dp"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
+
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
