@@ -90,6 +90,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
+                android:backgroundTint="#1E88E5"
                 android:src="@drawable/add_48px"
                 android:contentDescription="Add deck"
                 app:layout_constraintBottom_toBottomOf="parent"
