@@ -22,7 +22,6 @@ public class Flashcard implements Parcelable {
         public Flashcard createFromParcel(Parcel in) {
             return new Flashcard(in);
         }
-
         @Override
         public Flashcard[] newArray(int size) {
             return new Flashcard[size];

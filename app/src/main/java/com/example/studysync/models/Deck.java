@@ -1,24 +1,23 @@
 package com.example.studysync.models;
 
-import java.util.List;
+import java.util.Objects;
 
 public class Deck {
     private String id, title;
     private long createdAt;
     private boolean isFavorite;
     private int cardCount;
-    private List<Flashcard> flashcards;
 
     public Deck(String id, String title, long createdAt,
-                boolean isFavorite, List<Flashcard> flashcards) {
-        this.id = id;
-        this.title = title;
-        this.createdAt = createdAt;
+                boolean isFavorite, int cardCount) {
+        this.id         = id;
+        this.title      = title;
+        this.createdAt  = createdAt;
         this.isFavorite = isFavorite;
-        this.flashcards = flashcards;
-        this.cardCount = flashcards != null ? flashcards.size() : 0;
+        this.cardCount  = cardCount;
     }
 
+    // getters & setters
     public String getId() { return id; }
     public String getTitle() { return title; }
     public long getCreatedAt() { return createdAt; }
@@ -26,10 +25,21 @@ public class Deck {
     public void setFavorite(boolean fav) { isFavorite = fav; }
     public int getCardCount() { return cardCount; }
     public void setCardCount(int c) { cardCount = c; }
-    public List<Flashcard> getFlashcards() { return flashcards; }
-    public void setFlashcards(List<Flashcard> flashcards) {
-        this.flashcards = flashcards;
-        this.cardCount = flashcards != null ? flashcards.size() : 0;
+
+    public void setTitle(String title) {
+        this.title = title;
     }
-    public void setTitle(String title) { this.title = title; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Deck)) return false;
+        Deck deck = (Deck) o;
+        return Objects.equals(id, deck.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

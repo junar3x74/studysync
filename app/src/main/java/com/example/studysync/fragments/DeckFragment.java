@@ -60,7 +60,6 @@ public class DeckFragment extends Fragment {
         adapter = new DeckAdapter(decks, new DeckAdapter.OnDeckClickListener() {
             @Override
             public void onDeckClick(Deck deck) {
-
                 Toast.makeText(getContext(), "Clicked: " + deck.getTitle(), Toast.LENGTH_SHORT).show();
             }
 
@@ -91,10 +90,13 @@ public class DeckFragment extends Fragment {
         showOrHideEmpty(decks.size());
 
         fab.setOnClickListener(v -> {
-            new CreateDeckDialogFragment(newDeck -> {
-                decks.add(newDeck);
-                adapter.updateList(decks);
-                applyFilters();
+            new CreateDeckDialogFragment(new CreateDeckDialogFragment.CreateListener() {
+                @Override
+                public void onDeckCreated(Deck newDeck) {
+                    decks.add(newDeck);
+                    adapter.updateList(decks);
+                    applyFilters();
+                }
             }).show(getParentFragmentManager(), "create_deck");
         });
 
@@ -129,8 +131,6 @@ public class DeckFragment extends Fragment {
             recyclerView.setVisibility(View.VISIBLE);
         }
     }
-
-
 
     private List<Deck> loadMockDecks() {
         List<Deck> list = new ArrayList<>();
