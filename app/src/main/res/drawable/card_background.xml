@@ -1,0 +1,29 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Card shadow (soft, for elevation) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#33000000"/>
+            <corners android:radius="24dp"/>
+        </shape>
+    </item>
+    <!-- Card base (paper color) -->
+    <item android:top="4dp" android:left="0dp" android:right="0dp" android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFBEA"/>
+            <corners android:radius="20dp"/>
+            <stroke android:width="2dp" android:color="#E2E8F0"/>
+        </shape>
+    </item>
+    <!-- Dashed border (drawable effect) -->
+    <item android:top="12dp" android:left="12dp" android:right="12dp" android:bottom="12dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp"/>
+            <stroke
+                android:width="2dp"
+                android:color="#38BDF8"
+                android:dashWidth="8dp"
+                android:dashGap="8dp"/>
+            <solid android:color="@android:color/transparent"/>
+        </shape>
+    </item>
+</layer-list>

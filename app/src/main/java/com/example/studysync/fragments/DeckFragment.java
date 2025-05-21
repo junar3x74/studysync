@@ -1,5 +1,6 @@
 package com.example.studysync.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.studysync.FlashcardActivity;
 import com.example.studysync.R;
 import com.example.studysync.adapters.DeckAdapter;
 import com.example.studysync.models.Deck;
@@ -83,6 +85,21 @@ public class DeckFragment extends Fragment {
                 applyFilters();
                 Toast.makeText(getContext(), "Deleted: " + deck.getTitle(), Toast.LENGTH_SHORT).show();
             }
+        });
+
+        adapter = new DeckAdapter(decks, new DeckAdapter.OnDeckClickListener() {
+            @Override
+            public void onDeckClick(Deck deck) {
+                Intent intent = new Intent(getContext(), FlashcardActivity.class);
+                intent.putExtra("deck_id", deck.getId());
+                startActivity(intent);
+            }
+
+            @Override
+            public void onEditDeck(Deck deck) { /* ... */ }
+
+            @Override
+            public void onDeleteDeck(Deck deck) { /* ... */ }
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
