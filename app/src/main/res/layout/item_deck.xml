@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardDeck"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#6200EE">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:padding="12dp">
+
+        <!-- Deck Title -->
+        <TextView
+            android:id="@+id/textDeckTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Deck Title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imageFavorite" />
+
+        <!-- Creation Date / Subtitle -->
+        <TextView
+            android:id="@+id/textDeckSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="3 cards • 2 days ago"
+            android:textSize="14sp"
+            android:textColor="#757575"
+            app:layout_constraintStart_toStartOf="@id/textDeckTitle"
+            app:layout_constraintTop_toBottomOf="@id/textDeckTitle"
+            app:layout_constraintEnd_toStartOf="@+id/imageFavorite" />
+
+        <!-- Favorite Icon -->
+        <ImageView
+            android:id="@+id/imageFavorite"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Favorite"
+            app:srcCompat="@drawable/ic_favorite"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#6200EE" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

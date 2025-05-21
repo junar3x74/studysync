@@ -1,66 +1,144 @@
 package com.example.studysync.fragments;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.studysync.R;
+import com.example.studysync.adapters.DeckAdapter;
+import com.example.studysync.models.Deck;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.textfield.TextInputEditText;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link DeckFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+import java.util.List;
+
 public class DeckFragment extends Fragment {
+    private DeckAdapter adapter;
+    private RecyclerView recyclerView;
+    private View emptyState;
+    private TabLayout tabLayout;
+    private TextInputEditText searchInput;
+    private final List<Deck> decks = new ArrayList<>();
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public DeckFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment DeckFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static DeckFragment newInstance(String param1, String param2) {
-        DeckFragment fragment = new DeckFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_deck, container, false);
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(root, savedInstanceState);
+
+        Toolbar toolbar = root.findViewById(R.id.toolbar);
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+
+        recyclerView = root.findViewById(R.id.decksRecyclerView);
+        emptyState   = root.findViewById(R.id.emptyStateContainer);
+        tabLayout    = root.findViewById(R.id.tabLayout);
+        searchInput  = root.findViewById(R.id.searchInput);
+        FloatingActionButton fab = root.findViewById(R.id.createNewDeckFab);
+
+        decks.addAll(loadMockDecks());
+
+        adapter = new DeckAdapter(decks, new DeckAdapter.OnDeckClickListener() {
+            @Override
+            public void onDeckClick(Deck deck) {
+
+                Toast.makeText(getContext(), "Clicked: " + deck.getTitle(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onEditDeck(Deck deck) {
+                CreateDeckDialogFragment dialog = new CreateDeckDialogFragment(deck, updatedDeck -> {
+                    int index = decks.indexOf(deck);
+                    if (index != -1) {
+                        decks.set(index, updatedDeck);
+                        adapter.updateList(decks);
+                        applyFilters();
+                    }
+                });
+                dialog.show(getParentFragmentManager(), "edit_deck");
+            }
+
+            @Override
+            public void onDeleteDeck(Deck deck) {
+                decks.remove(deck);
+                adapter.updateList(decks);
+                applyFilters();
+                Toast.makeText(getContext(), "Deleted: " + deck.getTitle(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setAdapter(adapter);
+        showOrHideEmpty(decks.size());
+
+        fab.setOnClickListener(v -> {
+            new CreateDeckDialogFragment(newDeck -> {
+                decks.add(newDeck);
+                adapter.updateList(decks);
+                applyFilters();
+            }).show(getParentFragmentManager(), "create_deck");
+        });
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override public void onTabSelected(TabLayout.Tab tab)   { applyFilters(); }
+            @Override public void onTabUnselected(TabLayout.Tab tab) { }
+            @Override public void onTabReselected(TabLayout.Tab tab){ applyFilters(); }
+        });
+
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c)     { applyFilters(); }
+            @Override public void afterTextChanged(Editable e)                            { }
+        });
+    }
+
+    private void applyFilters() {
+        String query = searchInput.getText() != null
+                ? searchInput.getText().toString()
+                : "";
+        int tabIndex = tabLayout.getSelectedTabPosition();
+        adapter.filter(query, tabIndex);
+        showOrHideEmpty(adapter.getItemCount());
+    }
+
+    private void showOrHideEmpty(int count) {
+        if (count == 0) {
+            emptyState.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyState.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
         }
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_deck, container, false);
+
+
+    private List<Deck> loadMockDecks() {
+        List<Deck> list = new ArrayList<>();
+        long DAY = 24L * 3600 * 1000;
+        long now = System.currentTimeMillis();
+        list.add(new Deck("1", "Biology Terms", now - 2*DAY, false, 12));
+        list.add(new Deck("2", "Java Syntax",   now - 8*DAY, true,   8));
+        list.add(new Deck("3", "Spanish Verbs", now - 1*DAY, false, 20));
+        return list;
     }
 }
