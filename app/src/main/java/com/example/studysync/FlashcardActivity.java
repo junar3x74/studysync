@@ -1,6 +1,5 @@
 package com.example.studysync;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
 
@@ -13,14 +12,20 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.studysync.adapters.FlashcardPagerAdapter;
 import com.example.studysync.fragments.CreateFlashcardDialogFragment;
-import com.example.studysync.fragments.DeckFragment;
 import com.example.studysync.models.Flashcard;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FlashcardActivity extends AppCompatActivity {
+
+    private FirebaseFirestore db;
+    private List<Flashcard> flashcards = new ArrayList<>();
+    private FlashcardPagerAdapter adapter;
+    private String deckId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,16 +33,16 @@ public class FlashcardActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_flashcard);
 
-        String deckId = getIntent().getStringExtra("deck_id");
-        // TODO: load flashcards from DB for deckId
-        List<Flashcard> flashcards = loadMockFlashcards(deckId);
+        db = FirebaseFirestore.getInstance();
+        deckId = getIntent().getStringExtra("deck_id");
 
         ViewPager2 viewPager = findViewById(R.id.viewPager);
-        FlashcardPagerAdapter adapter = new FlashcardPagerAdapter(this, flashcards);
+        adapter = new FlashcardPagerAdapter(this, flashcards);
         viewPager.setAdapter(adapter);
 
-        ImageButton goback = findViewById(R.id.buttonBack);
+        loadFlashcardsFromFirestore(deckId);
 
+        ImageButton goback = findViewById(R.id.buttonBack);
         goback.setOnClickListener(view -> finish());
 
         FloatingActionButton fab = findViewById(R.id.createFlashcardFab);
@@ -48,8 +53,6 @@ public class FlashcardActivity extends AppCompatActivity {
             }).show(getSupportFragmentManager(), "create_flashcard");
         });
 
-
-
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -57,12 +60,26 @@ public class FlashcardActivity extends AppCompatActivity {
         });
     }
 
-    private List<Flashcard> loadMockFlashcards(String deckId) {
-        List<Flashcard> list = new ArrayList<>();
-        list.add(new Flashcard("1", deckId, "What is Java?", "A programming language."));
-        list.add(new Flashcard("2", deckId, "What is XML?", "A markup language."));
-        return list;
+    private void loadFlashcardsFromFirestore(String deckId) {
+        db.collection("decks").document(deckId).collection("flashcards")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    flashcards.clear();
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        Flashcard card = doc.toObject(Flashcard.class);
+                        flashcards.add(card);
+                    }
+                    adapter.notifyDataSetChanged();
+                });
     }
 
-
+    private void saveFlashcardToFirestore(Flashcard flashcard) {
+        db.collection("decks").document(deckId).collection("flashcards")
+                .document(flashcard.getId())
+                .set(flashcard)
+                .addOnSuccessListener(aVoid -> {
+                    flashcards.add(flashcard);
+                    adapter.notifyItemInserted(flashcards.size() - 1);
+                });
+    }
 }

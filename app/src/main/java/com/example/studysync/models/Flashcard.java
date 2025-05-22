@@ -7,6 +7,11 @@ public class Flashcard {
     private String frontText;
     private String backText;
 
+
+    public Flashcard(){
+
+    }
+
     public Flashcard(String id, String deckId, String frontText, String backText) {
         this.id = id;
         this.deckId = deckId;

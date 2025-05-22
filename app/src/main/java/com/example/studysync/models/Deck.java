@@ -8,6 +8,11 @@ public class Deck {
     private boolean isFavorite;
     private int cardCount;
 
+
+    public Deck(){
+
+    }
+
     public Deck(String id, String title, long createdAt,
                 boolean isFavorite, int cardCount) {
         this.id         = id;
