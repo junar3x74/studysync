@@ -96,11 +96,27 @@ public class DeckFragment extends Fragment {
             }
 
             @Override
-            public void onEditDeck(Deck deck) { /* ... */ }
+            public void onEditDeck(Deck deck) {
+                CreateDeckDialogFragment dialog = new CreateDeckDialogFragment(deck, updatedDeck -> {
+                    int index = decks.indexOf(deck);
+                    if (index != -1) {
+                        decks.set(index, updatedDeck);
+                        adapter.updateList(decks);
+                        applyFilters();
+                    }
+                });
+                dialog.show(getParentFragmentManager(), "edit_deck");
+            }
 
             @Override
-            public void onDeleteDeck(Deck deck) { /* ... */ }
+            public void onDeleteDeck(Deck deck) {
+                decks.remove(deck);
+                adapter.updateList(decks);
+                applyFilters();
+                Toast.makeText(getContext(), "Deleted: " + deck.getTitle(), Toast.LENGTH_SHORT).show();
+            }
         });
+
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);

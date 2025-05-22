@@ -12,8 +12,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.studysync.adapters.FlashcardPagerAdapter;
+import com.example.studysync.fragments.CreateFlashcardDialogFragment;
 import com.example.studysync.fragments.DeckFragment;
 import com.example.studysync.models.Flashcard;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,11 +38,16 @@ public class FlashcardActivity extends AppCompatActivity {
 
         ImageButton goback = findViewById(R.id.buttonBack);
 
-        goback.setOnClickListener(view -> {
-            Intent intent = new Intent(FlashcardActivity.this , DeckFragment.class);
-            startActivity(intent);
-            finish();
+        goback.setOnClickListener(view -> finish());
+
+        FloatingActionButton fab = findViewById(R.id.createFlashcardFab);
+        fab.setOnClickListener(v -> {
+            new CreateFlashcardDialogFragment(deckId, newFlashcard -> {
+                flashcards.add(newFlashcard);
+                adapter.notifyItemInserted(flashcards.size() - 1);
+            }).show(getSupportFragmentManager(), "create_flashcard");
         });
+
 
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
