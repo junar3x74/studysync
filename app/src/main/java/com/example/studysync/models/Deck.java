@@ -3,7 +3,7 @@ package com.example.studysync.models;
 import java.util.Objects;
 
 public class Deck {
-    private String id, title;
+    private String id, user_id, title;
     private long createdAt;
     private boolean isFavorite;
     private int cardCount;
@@ -12,9 +12,10 @@ public class Deck {
     public Deck() {
     }
 
-    public Deck(String id, String title, long createdAt,
+    public Deck(String id, String user_id, String title, long createdAt,
                 boolean isFavorite, int cardCount) {
         this.id         = id;
+        this.user_id    = user_id;
         this.title      = title;
         this.createdAt  = createdAt;
         this.isFavorite = isFavorite;
@@ -28,6 +29,14 @@ public class Deck {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getUser_id() {
+        return user_id;
+    }
+
+    public void setUser_id(String user_id) {
+        this.user_id = user_id;
     }
 
     public String getTitle() {

@@ -14,20 +14,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.studysync.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class SignupActivity extends AppCompatActivity {
-
 
     private EditText nameEditText, emailEditText, passwordEditText, confirmPasswordEditText;
     private Button signupBtn;
     private TextView goToLogin;
-
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
@@ -37,9 +33,7 @@ public class SignupActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_signup);
 
-
         mAuth = FirebaseAuth.getInstance();
-
         db = FirebaseFirestore.getInstance();
 
         nameEditText = findViewById(R.id.editTextName);
@@ -51,23 +45,11 @@ public class SignupActivity extends AppCompatActivity {
 
         signupBtn.setOnClickListener(view -> registerUser());
 
-
-
         goToLogin.setOnClickListener(view -> {
             Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
         });
-
-
-
-
-
-
-
-
-
-
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.signup), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -76,7 +58,7 @@ public class SignupActivity extends AppCompatActivity {
         });
     }
 
-    private void registerUser(){
+    private void registerUser() {
         String name = nameEditText.getText().toString().trim();
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -87,60 +69,55 @@ public class SignupActivity extends AppCompatActivity {
             nameEditText.requestFocus();
             return;
         }
-
         if (TextUtils.isEmpty(email)) {
             emailEditText.setError("Email is required");
             emailEditText.requestFocus();
             return;
         }
-
         if (TextUtils.isEmpty(password)) {
             passwordEditText.setError("Password is required");
             passwordEditText.requestFocus();
             return;
         }
-
         if (password.length() < 6) {
             passwordEditText.setError("Password must be at least 6 characters");
             passwordEditText.requestFocus();
             return;
         }
-
         if (!password.equals(confirmPassword)) {
             confirmPasswordEditText.setError("Passwords do not match");
             confirmPasswordEditText.requestFocus();
             return;
         }
 
-        mAuth.createUserWithEmailAndPassword(email , password)
-                .addOnCompleteListener(this, task ->{
-                    if (task.isSuccessful()){
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        assert user != null;
-                        saveUserDataToFirestore(user.getUid(), name, email);
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        assert firebaseUser != null;
+                        String userId = firebaseUser.getUid();
+                        long createdAt = System.currentTimeMillis();
+                        User userModel = new User(userId, name, email, createdAt);
+
+                        saveUserDataToFirestore(userModel);
+
                         Toast.makeText(this, "User Signup Successfully", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                         finish();
-                    }else {
+                    } else {
                         Toast.makeText(this, "Signup Failed", Toast.LENGTH_SHORT).show();
                     }
                 });
-
     }
 
-    private void saveUserDataToFirestore(String userId, String name, String email) {
-        Map<String, Object> user = new HashMap<>();
-        user.put("name",     name);
-        user.put("email",    email);
-        user.put("createdAt", System.currentTimeMillis());
-
+    private void saveUserDataToFirestore(User userModel) {
         db.collection("users")
-                .document(userId)
-                .set(user)
+                .document(userModel.getId())
+                .set(userModel)
                 .addOnSuccessListener(aVoid -> {
-                    // Optional: log or update UI
+                    // Success: Optionally update UI or log
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(

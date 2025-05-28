@@ -15,6 +15,10 @@ import androidx.fragment.app.DialogFragment;
 import com.example.studysync.R;
 import com.example.studysync.models.Deck;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.util.UUID;
 
 public class CreateDeckDialogFragment extends DialogFragment {
 
@@ -67,8 +71,16 @@ public class CreateDeckDialogFragment extends DialogFragment {
                     editListener.onDeckUpdated(deckToEdit);
                 }
             } else {
+                // Set user_id for the new deck
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                String userId = user != null ? user.getUid() : null;
+                if (userId == null) {
+                    Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Deck newDeck = new Deck(
-                        String.valueOf(System.currentTimeMillis()),
+                        UUID.randomUUID().toString(), // use UUID for unique id
+                        userId,
                         title,
                         System.currentTimeMillis(),
                         false,

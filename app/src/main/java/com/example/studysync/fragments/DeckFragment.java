@@ -25,11 +25,14 @@ import com.example.studysync.models.Deck;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class DeckFragment extends Fragment {
     private static final String TAG = "DeckFragment";
@@ -66,7 +69,7 @@ public class DeckFragment extends Fragment {
         searchInput  = root.findViewById(R.id.searchInput);
         FloatingActionButton fab = root.findViewById(R.id.createNewDeckFab);
 
-        // Load decks from Firebase instead of mock data
+        // Load decks from Firebase (with user_id filtering)
         loadDecksFromFirebase();
 
         adapter = new DeckAdapter(decks, new DeckAdapter.OnDeckClickListener() {
@@ -99,7 +102,18 @@ public class DeckFragment extends Fragment {
             new CreateDeckDialogFragment(new CreateDeckDialogFragment.CreateListener() {
                 @Override
                 public void onDeckCreated(Deck newDeck) {
-                    saveDeckToFirebase(newDeck);
+                    // Ensure user_id is set before saving
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null) {
+                        newDeck.setUser_id(user.getUid());
+                        // If id is empty, set a new UUID
+                        if (newDeck.getId() == null || newDeck.getId().isEmpty()) {
+                            newDeck.setId(UUID.randomUUID().toString());
+                        }
+                        saveDeckToFirebase(newDeck);
+                    } else {
+                        Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }).show(getParentFragmentManager(), "create_deck");
         });
@@ -117,8 +131,16 @@ public class DeckFragment extends Fragment {
         });
     }
 
+    // Only load decks belonging to the current user
     private void loadDecksFromFirebase() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String userId = user.getUid();
         db.collection("decks")
+                .whereEqualTo("user_id", userId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     decks.clear();
@@ -127,9 +149,10 @@ public class DeckFragment extends Fragment {
                             Deck deck = doc.toObject(Deck.class);
                             // Ensure the deck has an ID from the document
                             if (deck.getId() == null || deck.getId().isEmpty()) {
-                                // If no ID in the object, use the document ID
-                                deck = new Deck(doc.getId(), deck.getTitle(), deck.getCreatedAt(),
-                                        deck.isFavorite(), deck.getCardCount());
+                                deck.setId(doc.getId());
+                            }
+                            if (deck.getUser_id() == null || deck.getUser_id().isEmpty()) {
+                                deck.setUser_id(userId); // fallback for legacy decks
                             }
                             decks.add(deck);
                         } catch (Exception e) {
@@ -249,9 +272,9 @@ public class DeckFragment extends Fragment {
         List<Deck> list = new ArrayList<>();
         long DAY = 24L * 3600 * 1000;
         long now = System.currentTimeMillis();
-        list.add(new Deck("1", "Biology Terms", now - 2*DAY, false, 12));
-        list.add(new Deck("2", "Java Syntax",   now - 8*DAY, true,   8));
-        list.add(new Deck("3", "Spanish Verbs", now - 1*DAY, false, 20));
+        list.add(new Deck("1", "dummy_user_id", "Biology Terms", now - 2*DAY, false, 12));
+        list.add(new Deck("2", "dummy_user_id", "Java Syntax",   now - 8*DAY, true,   8));
+        list.add(new Deck("3", "dummy_user_id", "Spanish Verbs", now - 1*DAY, false, 20));
         return list;
     }
 }

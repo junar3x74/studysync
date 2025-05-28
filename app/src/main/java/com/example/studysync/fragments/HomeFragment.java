@@ -16,6 +16,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studysync.R;
 import com.example.studysync.adapters.DeckAdapter;
 import com.example.studysync.models.Deck;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +35,8 @@ public class HomeFragment extends Fragment {
     private DeckAdapter adapter;
     private List<Deck> allDecks = new ArrayList<>();
     private TextView totalDecksCount, totalCardsCount;
+
+    private ListenerRegistration decksListener;
 
     @Nullable
     @Override
@@ -43,19 +53,7 @@ public class HomeFragment extends Fragment {
         totalDecksCount = root.findViewById(R.id.totalDecksCount);
         totalCardsCount = root.findViewById(R.id.totalCardsCount);
 
-        // TODO: Replace with your real data source
-        allDecks = loadMockDecks();
-
-        // Update counters
-        totalDecksCount.setText(String.valueOf(allDecks.size()));
-        int cardSum = 0;
-        for (Deck d : allDecks) cardSum += d.getCardCount();
-        totalCardsCount.setText(String.valueOf(cardSum));
-
-        // Show recent decks (last 7 days)
-        List<Deck> recentDecks = getRecentDecks(allDecks);
-
-        adapter = new DeckAdapter(recentDecks, new DeckAdapter.OnDeckClickListener() {
+        adapter = new DeckAdapter(new ArrayList<>(), new DeckAdapter.OnDeckClickListener() {
             @Override
             public void onDeckClick(Deck deck) {
                 // Optional: handle deck click (open, view, etc)
@@ -75,6 +73,47 @@ public class HomeFragment extends Fragment {
         recentDecksList.setLayoutManager(new LinearLayoutManager(getContext()));
         recentDecksList.setAdapter(adapter);
 
+        listenToDecksRealtime();
+    }
+
+    private void listenToDecksRealtime() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        String userId = user.getUid();
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        decksListener = db.collection("decks")
+                .whereEqualTo("user_id", userId)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener(new EventListener<com.google.firebase.firestore.QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable com.google.firebase.firestore.QuerySnapshot snapshots, @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            // Handle error (e.g., log, show error UI)
+                            return;
+                        }
+                        allDecks.clear();
+                        if (snapshots != null) {
+                            for (QueryDocumentSnapshot doc : snapshots) {
+                                Deck deck = doc.toObject(Deck.class);
+                                allDecks.add(deck);
+                            }
+                        }
+                        updateUI();
+                    }
+                });
+    }
+
+    private void updateUI() {
+        // Update counters
+        totalDecksCount.setText(String.valueOf(allDecks.size()));
+        int cardSum = 0;
+        for (Deck d : allDecks) cardSum += d.getCardCount();
+        totalCardsCount.setText(String.valueOf(cardSum));
+
+        // Show recent decks (last 7 days)
+        List<Deck> recentDecks = getRecentDecks(allDecks);
+        adapter.updateList(recentDecks);
         updateEmptyState(recentDecks.size());
     }
 
@@ -101,14 +140,11 @@ public class HomeFragment extends Fragment {
         return recent;
     }
 
-    // Mock data for testing
-    private List<Deck> loadMockDecks() {
-        List<Deck> list = new ArrayList<>();
-        long DAY = 24L * 3600 * 1000;
-        long now = System.currentTimeMillis();
-        list.add(new Deck("1", "Biology Terms", now - 2 * DAY, false, 12));
-        list.add(new Deck("2", "Java Syntax", now - 8 * DAY, true, 8));
-        list.add(new Deck("3", "Spanish Verbs", now - 1 * DAY, false, 20));
-        return list;
+    @Override
+    public void onDestroyView() {
+        if (decksListener != null) {
+            decksListener.remove();
+        }
+        super.onDestroyView();
     }
 }
