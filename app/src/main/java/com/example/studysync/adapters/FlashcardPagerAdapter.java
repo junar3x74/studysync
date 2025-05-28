@@ -22,7 +22,7 @@ public class FlashcardPagerAdapter extends FragmentStateAdapter {
     @Override
     public Fragment createFragment(int position) {
         Flashcard card = flashcards.get(position);
-        return FlashcardFragment.newInstance(card.getFrontText(), card.getBackText());
+        return FlashcardFragment.newInstance(card.getQuestion(), card.getAnswer());
     }
 
     @Override

@@ -56,7 +56,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckVH> {
         );
         holder.subtitle.setText(deck.getCardCount() + " cards • " + ago);
 
-        int favRes = deck.isFavorite()
+        int favRes = deck.getIsFavorite()
                 ? R.drawable.ic_favorite_filled
                 : R.drawable.ic_favorite;
         holder.favIcon.setImageResource(favRes);
@@ -64,7 +64,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckVH> {
         holder.itemView.setOnClickListener(v -> listener.onDeckClick(deck));
 
         holder.favIcon.setOnClickListener(v -> {
-            deck.setFavorite(!deck.isFavorite());
+            deck.setIsFavorite(!deck.getIsFavorite());
             notifyItemChanged(position);
             // TODO: persist favorite state in your DB
         });
@@ -112,7 +112,7 @@ public class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckVH> {
                     matchesTab = now - d.getCreatedAt() < weekMs;
                     break;
                 case 2:
-                    matchesTab = d.isFavorite();
+                    matchesTab = d.getIsFavorite();
                     break;
                 default:
                     matchesTab = true;

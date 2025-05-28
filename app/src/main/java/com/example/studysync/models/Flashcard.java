@@ -2,51 +2,44 @@ package com.example.studysync.models;
 
 public class Flashcard {
     private String id;
-    private String deckId;
-    private String frontText;
-    private String backText;
+    private String deck_id;
+    private String question;
+    private String answer;
+    private long createdAt;
+    private boolean isFavorite;
+    private int sync_status; // 0 = not synced, 1 = synced
 
-    // Default constructor required for Firebase
-    public Flashcard() {
-    }
+    public Flashcard() {}
 
-    public Flashcard(String id, String deckId, String frontText, String backText) {
+    public Flashcard(String id, String deck_id, String question, String answer, long createdAt, boolean isFavorite, int sync_status) {
         this.id = id;
-        this.deckId = deckId;
-        this.frontText = frontText;
-        this.backText = backText;
+        this.deck_id = deck_id;
+        this.question = question;
+        this.answer = answer;
+        this.createdAt = createdAt;
+        this.isFavorite = isFavorite;
+        this.sync_status = sync_status;
     }
 
-    // Getters and setters (all required for Firebase)
-    public String getId() {
-        return id;
-    }
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getDeck_id() { return deck_id; }
+    public void setDeck_id(String deck_id) { this.deck_id = deck_id; }
 
-    public String getDeckId() {
-        return deckId;
-    }
+    public String getQuestion() { return question; }
+    public void setQuestion(String question) { this.question = question; }
 
-    public void setDeckId(String deckId) {
-        this.deckId = deckId;
-    }
+    public String getAnswer() { return answer; }
+    public void setAnswer(String answer) { this.answer = answer; }
 
-    public String getFrontText() {
-        return frontText;
-    }
+    public long getCreatedAt() { return createdAt; }
+    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 
-    public void setFrontText(String frontText) {
-        this.frontText = frontText;
-    }
+    public boolean getIsFavorite() { return isFavorite; }
+    public void setIsFavorite(boolean favorite) { isFavorite = favorite; }
 
-    public String getBackText() {
-        return backText;
-    }
-
-    public void setBackText(String backText) {
-        this.backText = backText;
-    }
+    public int getSync_status() { return sync_status; }
+    public void setSync_status(int sync_status) { this.sync_status = sync_status; }
 }

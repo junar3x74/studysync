@@ -97,7 +97,7 @@ public class SignupActivity extends AppCompatActivity {
                         assert firebaseUser != null;
                         String userId = firebaseUser.getUid();
                         long createdAt = System.currentTimeMillis();
-                        User userModel = new User(userId, name, email, createdAt);
+                        User userModel = new User(userId, name, email, createdAt, 0);
 
                         saveUserDataToFirestore(userModel);
 

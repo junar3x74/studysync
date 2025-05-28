@@ -1,6 +1,5 @@
 package com.example.studysync.fragments;
 
-import android.app.Dialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -54,7 +53,19 @@ public class CreateFlashcardDialogFragment extends DialogFragment {
             }
 
             String id = UUID.randomUUID().toString();
-            Flashcard newFlashcard = new Flashcard(id, deckId, front, back);
+            long createdAt = System.currentTimeMillis();
+            boolean isFavorite = false;
+            int syncStatus = 0; // not synced
+
+            Flashcard newFlashcard = new Flashcard(
+                    id,
+                    deckId,
+                    front,
+                    back,
+                    createdAt,
+                    isFavorite,
+                    syncStatus
+            );
             listener.onFlashcardCreated(newFlashcard);
             dismiss();
         });

@@ -110,6 +110,8 @@ public class DeckFragment extends Fragment {
                         if (newDeck.getId() == null || newDeck.getId().isEmpty()) {
                             newDeck.setId(UUID.randomUUID().toString());
                         }
+                        // Ensure sync_status for new Deck
+                        newDeck.setSync_status(0);
                         saveDeckToFirebase(newDeck);
                     } else {
                         Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
@@ -154,6 +156,8 @@ public class DeckFragment extends Fragment {
                             if (deck.getUser_id() == null || deck.getUser_id().isEmpty()) {
                                 deck.setUser_id(userId); // fallback for legacy decks
                             }
+                            // Ensure sync_status is marked as synced (1) for decks loaded from Firebase
+                            deck.setSync_status(1);
                             decks.add(deck);
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing deck: " + doc.getId(), e);
@@ -179,6 +183,8 @@ public class DeckFragment extends Fragment {
                 .set(deck)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Deck saved successfully: " + deck.getTitle());
+                    // Mark as synced after successful save
+                    deck.setSync_status(1);
                     decks.add(deck);
                     adapter.updateList(decks);
                     applyFilters();
@@ -196,6 +202,8 @@ public class DeckFragment extends Fragment {
                 .set(deck)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Deck updated successfully: " + deck.getTitle());
+                    // Mark as synced after successful update
+                    deck.setSync_status(1);
                     // Update local list
                     int index = -1;
                     for (int i = 0; i < decks.size(); i++) {
@@ -272,9 +280,10 @@ public class DeckFragment extends Fragment {
         List<Deck> list = new ArrayList<>();
         long DAY = 24L * 3600 * 1000;
         long now = System.currentTimeMillis();
-        list.add(new Deck("1", "dummy_user_id", "Biology Terms", now - 2*DAY, false, 12));
-        list.add(new Deck("2", "dummy_user_id", "Java Syntax",   now - 8*DAY, true,   8));
-        list.add(new Deck("3", "dummy_user_id", "Spanish Verbs", now - 1*DAY, false, 20));
+        // Add sync_status = 1 for mock data (synced)
+        list.add(new Deck("1", "dummy_user_id", "Biology Terms", now - 2*DAY, false, 12, 1));
+        list.add(new Deck("2", "dummy_user_id", "Java Syntax",   now - 8*DAY, true,   8, 1));
+        list.add(new Deck("3", "dummy_user_id", "Spanish Verbs", now - 1*DAY, false, 20, 1));
         return list;
     }
 }

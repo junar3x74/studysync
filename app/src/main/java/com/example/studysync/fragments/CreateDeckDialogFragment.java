@@ -84,6 +84,7 @@ public class CreateDeckDialogFragment extends DialogFragment {
                         title,
                         System.currentTimeMillis(),
                         false,
+                        0,
                         0
                 );
                 if (createListener != null) {

@@ -81,9 +81,16 @@ public class FlashcardActivity extends AppCompatActivity {
                             Flashcard card = doc.toObject(Flashcard.class);
                             // Ensure the flashcard has an ID from the document
                             if (card.getId() == null || card.getId().isEmpty()) {
-                                // Create new flashcard with document ID
-                                card = new Flashcard(doc.getId(), card.getDeckId(),
-                                        card.getFrontText(), card.getBackText());
+                                // Create new flashcard with document ID and all fields
+                                card = new Flashcard(
+                                        doc.getId(),
+                                        card.getDeck_id(),
+                                        card.getQuestion(),
+                                        card.getAnswer(),
+                                        card.getCreatedAt(),
+                                        card.getIsFavorite(),
+                                        1 // Assume downloaded from Firebase = synced
+                                );
                             }
                             flashcards.add(card);
                         } catch (Exception e) {
@@ -103,7 +110,7 @@ public class FlashcardActivity extends AppCompatActivity {
     }
 
     private void saveFlashcardToFirestore(Flashcard flashcard) {
-        Log.d(TAG, "Saving flashcard: " + flashcard.getFrontText());
+        Log.d(TAG, "Saving flashcard: " + flashcard.getQuestion());
 
         db.collection("decks").document(deckId).collection("flashcards")
                 .document(flashcard.getId())
