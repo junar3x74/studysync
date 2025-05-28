@@ -3,6 +3,7 @@ package com.example.studysync.models;
 public class Flashcard {
     private String id;
     private String deck_id;
+    private String user_id; // Added user_id for ownership/tracking
     private String question;
     private String answer;
     private long createdAt;
@@ -11,9 +12,10 @@ public class Flashcard {
 
     public Flashcard() {}
 
-    public Flashcard(String id, String deck_id, String question, String answer, long createdAt, boolean isFavorite, int sync_status) {
+    public Flashcard(String id, String deck_id, String user_id, String question, String answer, long createdAt, boolean isFavorite, int sync_status) {
         this.id = id;
         this.deck_id = deck_id;
+        this.user_id = user_id;
         this.question = question;
         this.answer = answer;
         this.createdAt = createdAt;
@@ -27,6 +29,9 @@ public class Flashcard {
 
     public String getDeck_id() { return deck_id; }
     public void setDeck_id(String deck_id) { this.deck_id = deck_id; }
+
+    public String getUser_id() { return user_id; }
+    public void setUser_id(String user_id) { this.user_id = user_id; }
 
     public String getQuestion() { return question; }
     public void setQuestion(String question) { this.question = question; }

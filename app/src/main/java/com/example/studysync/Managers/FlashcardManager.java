@@ -23,6 +23,7 @@ public class FlashcardManager {
         ContentValues values = new ContentValues();
         values.put("id", card.getId());
         values.put("deck_id", card.getDeck_id());
+        values.put("user_id", card.getUser_id()); // Ensure user_id is handled
         values.put("question", card.getQuestion());
         values.put("answer", card.getAnswer());
         values.put("createdAt", card.getCreatedAt());
@@ -60,10 +61,31 @@ public class FlashcardManager {
         return result;
     }
 
+    public Flashcard getFlashcardById(String cardId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query("flashcards", null, "id = ?", new String[]{cardId}, null, null, null);
+        Flashcard card = null;
+        if (cursor.moveToFirst()) {
+            card = fromCursor(cursor);
+        }
+        cursor.close();
+        return card;
+    }
+
+    public void deleteFlashcard(String cardId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete("flashcards", "id = ?", new String[]{cardId});
+    }
+
+    public void insertOrUpdateCard(Flashcard card, int syncStatus) {
+        insertOrUpdateFlashcard(card, syncStatus);
+    }
+
     private Flashcard fromCursor(Cursor cursor) {
         return new Flashcard(
                 cursor.getString(cursor.getColumnIndexOrThrow("id")),
                 cursor.getString(cursor.getColumnIndexOrThrow("deck_id")),
+                cursor.getString(cursor.getColumnIndexOrThrow("user_id")), // read user_id
                 cursor.getString(cursor.getColumnIndexOrThrow("question")),
                 cursor.getString(cursor.getColumnIndexOrThrow("answer")),
                 cursor.getLong(cursor.getColumnIndexOrThrow("createdAt")),

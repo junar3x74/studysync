@@ -2,6 +2,7 @@ package com.example.studysync.fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -29,8 +30,6 @@ import com.example.studysync.models.Deck;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -111,15 +110,19 @@ public class DeckFragment extends Fragment {
             new CreateDeckDialogFragment(new CreateDeckDialogFragment.CreateListener() {
                 @Override
                 public void onDeckCreated(Deck newDeck) {
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    if (user != null) {
-                        newDeck.setUser_id(user.getUid());
+                    // Use current_user_id from SharedPreferences instead of FirebaseAuth
+                    SharedPreferences prefs = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+                    String userId = prefs.getString("current_user_id", null);
+                    if (userId != null) {
+                        newDeck.setUser_id(userId);
                         if (newDeck.getId() == null || newDeck.getId().isEmpty()) {
                             newDeck.setId(UUID.randomUUID().toString());
                         }
                         newDeck.setSync_status(0);
                         saveDeckLocallyAndSync(newDeck);
                         Toast.makeText(getContext(), "Deck saved locally!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
                     }
                 }
             }).show(getParentFragmentManager(), "create_deck");
@@ -139,9 +142,12 @@ public class DeckFragment extends Fragment {
     }
 
     private void loadDecksFromLocal() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-        String userId = user.getUid();
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String userId = prefs.getString("current_user_id", null);
+        if (userId == null) {
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            return;
+        }
         decks.clear();
         decks.addAll(deckManager.getAllDecks(userId));
         if (adapter != null) adapter.updateList(decks);
@@ -149,6 +155,17 @@ public class DeckFragment extends Fragment {
     }
 
     private void saveDeckLocallyAndSync(Deck deck) {
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String userId = prefs.getString("current_user_id", null);
+        if (userId == null) {
+            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        deck.setUser_id(userId);
+        if (deck.getId() == null || deck.getId().isEmpty()) {
+            deck.setId(UUID.randomUUID().toString());
+        }
+        deck.setSync_status(0);
         deckManager.insertOrUpdateDeck(deck, 0); // 0: not synced
         loadDecksFromLocal();
         if (isNetworkAvailable()) syncUnsyncedDecksToFirebase();
@@ -164,9 +181,9 @@ public class DeckFragment extends Fragment {
     }
 
     private void syncUnsyncedDecksToFirebase() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-        String userId = user.getUid();
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String userId = prefs.getString("current_user_id", null);
+        if (userId == null) return;
         List<Deck> unsynced = deckManager.getUnsyncedDecks();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         for (Deck deck : unsynced) {
@@ -176,9 +193,9 @@ public class DeckFragment extends Fragment {
     }
 
     private void syncDecksFromFirebase() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
-        String userId = user.getUid();
+        SharedPreferences prefs = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String userId = prefs.getString("current_user_id", null);
+        if (userId == null) return;
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("decks").whereEqualTo("user_id", userId).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {

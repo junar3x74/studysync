@@ -32,6 +32,7 @@ public class FlashcardActivity extends AppCompatActivity {
     private List<Flashcard> flashcards = new ArrayList<>();
     private FlashcardPagerAdapter adapter;
     private String deckId;
+    private String userId; // Added userId
     private ViewPager2 viewPager;
     private FlashcardManager flashcardManager;
 
@@ -42,6 +43,8 @@ public class FlashcardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_flashcard);
 
         deckId = getIntent().getStringExtra("deck_id");
+        userId = getCurrentUserId(); // Retrieve userId from preferences
+
         flashcardManager = new FlashcardManager(this);
 
         if (deckId == null) {
@@ -66,7 +69,7 @@ public class FlashcardActivity extends AppCompatActivity {
 
         FloatingActionButton fab = findViewById(R.id.createFlashcardFab);
         fab.setOnClickListener(v -> {
-            new CreateFlashcardDialogFragment(deckId, newFlashcard -> {
+            new CreateFlashcardDialogFragment(deckId, userId, newFlashcard -> {
                 saveFlashcardLocallyAndSync(newFlashcard);
                 Toast.makeText(this, "Flashcard saved locally!", Toast.LENGTH_SHORT).show();
             }).show(getSupportFragmentManager(), "create_flashcard");
@@ -119,5 +122,10 @@ public class FlashcardActivity extends AppCompatActivity {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnected();
+    }
+
+    private String getCurrentUserId() {
+        return getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                .getString("current_user_id", null);
     }
 }

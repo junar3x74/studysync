@@ -36,6 +36,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.zxing.android.embedded)
     implementation(libs.androidx.recyclerview)
     implementation(libs.work.runtime.ktx)
     implementation(libs.appcompat)

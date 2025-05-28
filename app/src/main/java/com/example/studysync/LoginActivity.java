@@ -1,6 +1,8 @@
 package com.example.studysync;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -77,9 +79,14 @@ public class LoginActivity extends AppCompatActivity {
                             FirebaseUser firebaseUser = mAuth.getCurrentUser();
                             // Save/update user to local SQLite for offline login
                             if (firebaseUser != null) {
-                                // You could fetch user details from Firestore here if you want to keep everything in sync
                                 User user = new User(firebaseUser.getUid(), firebaseUser.getDisplayName(), firebaseUser.getEmail(), System.currentTimeMillis(), 1);
                                 userManager.insertOrUpdateUser(user, 1);
+                                // --- Save user to SharedPreferences for offline access
+                                getSharedPreferences("user_prefs", MODE_PRIVATE)
+                                        .edit()
+                                        .putString("current_user_id", user.getId())
+                                        .putString("current_user_email", user.getEmail())
+                                        .apply();
                             }
                             Toast.makeText(LoginActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
                             navigateToMainActivity();
@@ -98,6 +105,13 @@ public class LoginActivity extends AppCompatActivity {
         User user = userManager.getUserByEmail(email);
         // No password field in your User model, so only allow offline login if user exists
         if (user != null) {
+            // --- Save user to SharedPreferences for offline access
+            getSharedPreferences("user_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putString("current_user_id", user.getId())
+                    .putString("current_user_email", user.getEmail())
+                    .apply();
+
             Toast.makeText(this, "Offline login successful!", Toast.LENGTH_SHORT).show();
             navigateToMainActivity();
         } else {

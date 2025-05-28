@@ -25,10 +25,12 @@ public class CreateFlashcardDialogFragment extends DialogFragment {
     }
 
     private final String deckId;
+    private final String userId; // Added userId
     private final CreateFlashcardListener listener;
 
-    public CreateFlashcardDialogFragment(String deckId, CreateFlashcardListener listener) {
+    public CreateFlashcardDialogFragment(String deckId, String userId, CreateFlashcardListener listener) {
         this.deckId = deckId;
+        this.userId = userId;
         this.listener = listener;
     }
 
@@ -60,6 +62,7 @@ public class CreateFlashcardDialogFragment extends DialogFragment {
             Flashcard newFlashcard = new Flashcard(
                     id,
                     deckId,
+                    userId, // set user_id here
                     front,
                     back,
                     createdAt,

@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "studysync.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2; // Bumped version for user_id
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -36,6 +36,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "CREATE TABLE flashcards (" +
                         "id TEXT PRIMARY KEY, " +
                         "deck_id TEXT, " +
+                        "user_id TEXT, " + // Consistently add user_id
                         "question TEXT, " +
                         "answer TEXT, " +
                         "createdAt INTEGER, " +
@@ -46,10 +47,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Simple upgrade: drop and recreate
-        db.execSQL("DROP TABLE IF EXISTS users");
-        db.execSQL("DROP TABLE IF EXISTS decks");
-        db.execSQL("DROP TABLE IF EXISTS flashcards");
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE flashcards ADD COLUMN user_id TEXT");
+        }
+        // Add future migrations here
     }
 }

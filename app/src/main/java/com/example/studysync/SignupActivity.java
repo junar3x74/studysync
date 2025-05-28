@@ -1,6 +1,7 @@
 package com.example.studysync;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Button;
@@ -112,6 +113,13 @@ public class SignupActivity extends AppCompatActivity {
                             // Save to SQLite as synced
                             userManager.insertOrUpdateUser(userModel, 1);
 
+                            // Save user to SharedPreferences for offline access
+                            getSharedPreferences("user_prefs", MODE_PRIVATE)
+                                    .edit()
+                                    .putString("current_user_id", userModel.getId())
+                                    .putString("current_user_email", userModel.getEmail())
+                                    .apply();
+
                             Toast.makeText(this, "User Signup Successfully", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -128,6 +136,14 @@ public class SignupActivity extends AppCompatActivity {
             User userModel = new User(userId, name, email, createdAt, 0);
 
             userManager.insertOrUpdateUser(userModel, 0);
+
+            // Save user to SharedPreferences for offline access
+            getSharedPreferences("user_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putString("current_user_id", userModel.getId())
+                    .putString("current_user_email", userModel.getEmail())
+                    .apply();
+
             Toast.makeText(this, "Registered locally! Will sync when online.", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
