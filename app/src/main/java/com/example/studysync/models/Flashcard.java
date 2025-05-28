@@ -1,15 +1,13 @@
 package com.example.studysync.models;
 
-
 public class Flashcard {
     private String id;
     private String deckId;
     private String frontText;
     private String backText;
 
-
-    public Flashcard(){
-
+    // Default constructor required for Firebase
+    public Flashcard() {
     }
 
     public Flashcard(String id, String deckId, String frontText, String backText) {
@@ -19,11 +17,36 @@ public class Flashcard {
         this.backText = backText;
     }
 
-    // Getters & setters
-    public String getId() { return id; }
-    public String getDeckId() { return deckId; }
-    public String getFrontText() { return frontText; }
-    public String getBackText() { return backText; }
-    public void setFrontText(String frontText) { this.frontText = frontText; }
-    public void setBackText(String backText) { this.backText = backText; }
+    // Getters and setters (all required for Firebase)
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getDeckId() {
+        return deckId;
+    }
+
+    public void setDeckId(String deckId) {
+        this.deckId = deckId;
+    }
+
+    public String getFrontText() {
+        return frontText;
+    }
+
+    public void setFrontText(String frontText) {
+        this.frontText = frontText;
+    }
+
+    public String getBackText() {
+        return backText;
+    }
+
+    public void setBackText(String backText) {
+        this.backText = backText;
+    }
 }

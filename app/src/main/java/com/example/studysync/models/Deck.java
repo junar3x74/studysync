@@ -8,9 +8,8 @@ public class Deck {
     private boolean isFavorite;
     private int cardCount;
 
-
-    public Deck(){
-
+    // Default constructor required for Firebase
+    public Deck() {
     }
 
     public Deck(String id, String title, long createdAt,
@@ -22,17 +21,54 @@ public class Deck {
         this.cardCount  = cardCount;
     }
 
-    // getters & setters
-    public String getId() { return id; }
-    public String getTitle() { return title; }
-    public long getCreatedAt() { return createdAt; }
-    public boolean isFavorite() { return isFavorite; }
-    public void setFavorite(boolean fav) { isFavorite = fav; }
-    public int getCardCount() { return cardCount; }
-    public void setCardCount(int c) { cardCount = c; }
+    // Getters and setters (all required for Firebase)
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    // Note: Firebase expects "isFavorite" getter for boolean fields
+    public boolean getIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public int getCardCount() {
+        return cardCount;
+    }
+
+    public void setCardCount(int cardCount) {
+        this.cardCount = cardCount;
     }
 
     @Override

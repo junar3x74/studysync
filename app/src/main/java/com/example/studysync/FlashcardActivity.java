@@ -1,7 +1,9 @@
 package com.example.studysync;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,11 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FlashcardActivity extends AppCompatActivity {
+    private static final String TAG = "FlashcardActivity";
 
     private FirebaseFirestore db;
     private List<Flashcard> flashcards = new ArrayList<>();
     private FlashcardPagerAdapter adapter;
     private String deckId;
+    private ViewPager2 viewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +40,13 @@ public class FlashcardActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         deckId = getIntent().getStringExtra("deck_id");
 
-        ViewPager2 viewPager = findViewById(R.id.viewPager);
+        if (deckId == null) {
+            Toast.makeText(this, "Error: No deck selected", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        viewPager = findViewById(R.id.viewPager);
         adapter = new FlashcardPagerAdapter(this, flashcards);
         viewPager.setAdapter(adapter);
 
@@ -48,8 +58,7 @@ public class FlashcardActivity extends AppCompatActivity {
         FloatingActionButton fab = findViewById(R.id.createFlashcardFab);
         fab.setOnClickListener(v -> {
             new CreateFlashcardDialogFragment(deckId, newFlashcard -> {
-                flashcards.add(newFlashcard);
-                adapter.notifyItemInserted(flashcards.size() - 1);
+                saveFlashcardToFirestore(newFlashcard);
             }).show(getSupportFragmentManager(), "create_flashcard");
         });
 
@@ -61,25 +70,71 @@ public class FlashcardActivity extends AppCompatActivity {
     }
 
     private void loadFlashcardsFromFirestore(String deckId) {
+        Log.d(TAG, "Loading flashcards for deck: " + deckId);
+
         db.collection("decks").document(deckId).collection("flashcards")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     flashcards.clear();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        Flashcard card = doc.toObject(Flashcard.class);
-                        flashcards.add(card);
+                        try {
+                            Flashcard card = doc.toObject(Flashcard.class);
+                            // Ensure the flashcard has an ID from the document
+                            if (card.getId() == null || card.getId().isEmpty()) {
+                                // Create new flashcard with document ID
+                                card = new Flashcard(doc.getId(), card.getDeckId(),
+                                        card.getFrontText(), card.getBackText());
+                            }
+                            flashcards.add(card);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing flashcard: " + doc.getId(), e);
+                        }
                     }
                     adapter.notifyDataSetChanged();
+                    Log.d(TAG, "Loaded " + flashcards.size() + " flashcards");
+
+                    // Update deck card count
+                    updateDeckCardCount(deckId, flashcards.size());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading flashcards from Firebase", e);
+                    Toast.makeText(this, "Failed to load flashcards", Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void saveFlashcardToFirestore(Flashcard flashcard) {
+        Log.d(TAG, "Saving flashcard: " + flashcard.getFrontText());
+
         db.collection("decks").document(deckId).collection("flashcards")
                 .document(flashcard.getId())
                 .set(flashcard)
                 .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Flashcard saved successfully");
                     flashcards.add(flashcard);
                     adapter.notifyItemInserted(flashcards.size() - 1);
+
+                    // Move to the new flashcard
+                    viewPager.setCurrentItem(flashcards.size() - 1, true);
+
+                    // Update deck card count
+                    updateDeckCardCount(deckId, flashcards.size());
+
+                    Toast.makeText(this, "Flashcard created successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error saving flashcard to Firebase", e);
+                    Toast.makeText(this, "Failed to create flashcard", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void updateDeckCardCount(String deckId, int cardCount) {
+        db.collection("decks").document(deckId)
+                .update("cardCount", cardCount)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Updated deck card count to: " + cardCount);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating deck card count", e);
                 });
     }
 }
