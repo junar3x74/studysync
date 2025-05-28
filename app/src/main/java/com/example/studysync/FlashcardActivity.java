@@ -1,5 +1,8 @@
 package com.example.studysync;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
@@ -13,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.studysync.adapters.FlashcardPagerAdapter;
+import com.example.studysync.Managers.FlashcardManager;
 import com.example.studysync.fragments.CreateFlashcardDialogFragment;
 import com.example.studysync.models.Flashcard;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -25,11 +29,11 @@ import java.util.List;
 public class FlashcardActivity extends AppCompatActivity {
     private static final String TAG = "FlashcardActivity";
 
-    private FirebaseFirestore db;
     private List<Flashcard> flashcards = new ArrayList<>();
     private FlashcardPagerAdapter adapter;
     private String deckId;
     private ViewPager2 viewPager;
+    private FlashcardManager flashcardManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +41,8 @@ public class FlashcardActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_flashcard);
 
-        db = FirebaseFirestore.getInstance();
         deckId = getIntent().getStringExtra("deck_id");
+        flashcardManager = new FlashcardManager(this);
 
         if (deckId == null) {
             Toast.makeText(this, "Error: No deck selected", Toast.LENGTH_SHORT).show();
@@ -50,7 +54,12 @@ public class FlashcardActivity extends AppCompatActivity {
         adapter = new FlashcardPagerAdapter(this, flashcards);
         viewPager.setAdapter(adapter);
 
-        loadFlashcardsFromFirestore(deckId);
+        loadFlashcardsFromLocal(deckId);
+
+        if (isNetworkAvailable()) {
+            syncUnsyncedFlashcardsToFirebase();
+            syncFlashcardsFromFirebase();
+        }
 
         ImageButton goback = findViewById(R.id.buttonBack);
         goback.setOnClickListener(view -> finish());
@@ -58,7 +67,8 @@ public class FlashcardActivity extends AppCompatActivity {
         FloatingActionButton fab = findViewById(R.id.createFlashcardFab);
         fab.setOnClickListener(v -> {
             new CreateFlashcardDialogFragment(deckId, newFlashcard -> {
-                saveFlashcardToFirestore(newFlashcard);
+                saveFlashcardLocallyAndSync(newFlashcard);
+                Toast.makeText(this, "Flashcard saved locally!", Toast.LENGTH_SHORT).show();
             }).show(getSupportFragmentManager(), "create_flashcard");
         });
 
@@ -69,79 +79,45 @@ public class FlashcardActivity extends AppCompatActivity {
         });
     }
 
-    private void loadFlashcardsFromFirestore(String deckId) {
-        Log.d(TAG, "Loading flashcards for deck: " + deckId);
+    private void loadFlashcardsFromLocal(String deckId) {
+        flashcards.clear();
+        flashcards.addAll(flashcardManager.getAllFlashcards(deckId));
+        adapter.notifyDataSetChanged();
+    }
 
-        db.collection("decks").document(deckId).collection("flashcards")
-                .get()
+    private void saveFlashcardLocallyAndSync(Flashcard card) {
+        flashcardManager.insertOrUpdateFlashcard(card, 0); // not synced
+        loadFlashcardsFromLocal(deckId);
+        if (isNetworkAvailable()) syncUnsyncedFlashcardsToFirebase();
+    }
+
+    private void syncUnsyncedFlashcardsToFirebase() {
+        List<Flashcard> unsynced = flashcardManager.getUnsyncedFlashcards();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        for (Flashcard card : unsynced) {
+            db.collection("decks").document(deckId)
+                    .collection("flashcards").document(card.getId())
+                    .set(card)
+                    .addOnSuccessListener(aVoid -> flashcardManager.updateFlashcardSyncStatus(card.getId(), 1));
+        }
+    }
+
+    private void syncFlashcardsFromFirebase() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("decks").document(deckId).collection("flashcards").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    flashcards.clear();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        try {
-                            Flashcard card = doc.toObject(Flashcard.class);
-                            // Ensure the flashcard has an ID from the document
-                            if (card.getId() == null || card.getId().isEmpty()) {
-                                // Create new flashcard with document ID and all fields
-                                card = new Flashcard(
-                                        doc.getId(),
-                                        card.getDeck_id(),
-                                        card.getQuestion(),
-                                        card.getAnswer(),
-                                        card.getCreatedAt(),
-                                        card.getIsFavorite(),
-                                        1 // Assume downloaded from Firebase = synced
-                                );
-                            }
-                            flashcards.add(card);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error parsing flashcard: " + doc.getId(), e);
-                        }
+                        Flashcard card = doc.toObject(Flashcard.class);
+                        card.setSync_status(1); // mark as synced
+                        flashcardManager.insertOrUpdateFlashcard(card, 1);
                     }
-                    adapter.notifyDataSetChanged();
-                    Log.d(TAG, "Loaded " + flashcards.size() + " flashcards");
-
-                    // Update deck card count
-                    updateDeckCardCount(deckId, flashcards.size());
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading flashcards from Firebase", e);
-                    Toast.makeText(this, "Failed to load flashcards", Toast.LENGTH_SHORT).show();
+                    loadFlashcardsFromLocal(deckId);
                 });
     }
 
-    private void saveFlashcardToFirestore(Flashcard flashcard) {
-        Log.d(TAG, "Saving flashcard: " + flashcard.getQuestion());
-
-        db.collection("decks").document(deckId).collection("flashcards")
-                .document(flashcard.getId())
-                .set(flashcard)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Flashcard saved successfully");
-                    flashcards.add(flashcard);
-                    adapter.notifyItemInserted(flashcards.size() - 1);
-
-                    // Move to the new flashcard
-                    viewPager.setCurrentItem(flashcards.size() - 1, true);
-
-                    // Update deck card count
-                    updateDeckCardCount(deckId, flashcards.size());
-
-                    Toast.makeText(this, "Flashcard created successfully", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error saving flashcard to Firebase", e);
-                    Toast.makeText(this, "Failed to create flashcard", Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void updateDeckCardCount(String deckId, int cardCount) {
-        db.collection("decks").document(deckId)
-                .update("cardCount", cardCount)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Updated deck card count to: " + cardCount);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating deck card count", e);
-                });
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
     }
 }

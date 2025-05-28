@@ -14,10 +14,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.studysync.Managers.UserManager;
 import com.example.studysync.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.UUID;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -26,6 +29,7 @@ public class SignupActivity extends AppCompatActivity {
     private TextView goToLogin;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private UserManager userManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +39,7 @@ public class SignupActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        userManager = new UserManager(this);
 
         nameEditText = findViewById(R.id.editTextName);
         emailEditText = findViewById(R.id.editTextEmail);
@@ -90,26 +95,45 @@ public class SignupActivity extends AppCompatActivity {
             return;
         }
 
-        mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                        assert firebaseUser != null;
-                        String userId = firebaseUser.getUid();
-                        long createdAt = System.currentTimeMillis();
-                        User userModel = new User(userId, name, email, createdAt, 0);
+        if (isNetworkAvailable()) {
+            // Register online (Firebase)
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                            assert firebaseUser != null;
+                            String userId = firebaseUser.getUid();
+                            long createdAt = System.currentTimeMillis();
+                            User userModel = new User(userId, name, email, createdAt, 1);
 
-                        saveUserDataToFirestore(userModel);
+                            // Save to Firestore
+                            saveUserDataToFirestore(userModel);
 
-                        Toast.makeText(this, "User Signup Successfully", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Toast.makeText(this, "Signup Failed", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                            // Save to SQLite as synced
+                            userManager.insertOrUpdateUser(userModel, 1);
+
+                            Toast.makeText(this, "User Signup Successfully", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Toast.makeText(this, "Signup Failed", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } else {
+            // Register offline (SQLite only)
+            String userId = UUID.randomUUID().toString();
+            long createdAt = System.currentTimeMillis();
+            User userModel = new User(userId, name, email, createdAt, 0);
+
+            userManager.insertOrUpdateUser(userModel, 0);
+            Toast.makeText(this, "Registered locally! Will sync when online.", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        }
     }
 
     private void saveUserDataToFirestore(User userModel) {
@@ -117,7 +141,7 @@ public class SignupActivity extends AppCompatActivity {
                 .document(userModel.getId())
                 .set(userModel)
                 .addOnSuccessListener(aVoid -> {
-                    // Success: Optionally update UI or log
+                    // Optionally update UI or log
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(
@@ -126,5 +150,11 @@ public class SignupActivity extends AppCompatActivity {
                             Toast.LENGTH_LONG
                     ).show();
                 });
+    }
+
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        android.net.NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnected();
     }
 }

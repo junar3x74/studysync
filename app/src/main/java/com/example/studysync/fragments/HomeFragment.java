@@ -1,7 +1,11 @@
 package com.example.studysync.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -9,10 +13,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.studysync.LoginActivity;
 import com.example.studysync.R;
 import com.example.studysync.adapters.DeckAdapter;
 import com.example.studysync.models.Deck;
@@ -35,7 +42,6 @@ public class HomeFragment extends Fragment {
     private DeckAdapter adapter;
     private List<Deck> allDecks = new ArrayList<>();
     private TextView totalDecksCount, totalCardsCount;
-
     private ListenerRegistration decksListener;
 
     @Nullable
@@ -48,6 +54,15 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(root, savedInstanceState);
 
+        // Enable options menu in fragment
+        setHasOptionsMenu(true);
+
+        // Set up toolbar as action bar
+        Toolbar toolbar = root.findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+        }
+
         recentDecksList = root.findViewById(R.id.recentDecksList);
         emptyStateContainer = root.findViewById(R.id.emptyStateContainer);
         totalDecksCount = root.findViewById(R.id.totalDecksCount);
@@ -55,25 +70,36 @@ public class HomeFragment extends Fragment {
 
         adapter = new DeckAdapter(new ArrayList<>(), new DeckAdapter.OnDeckClickListener() {
             @Override
-            public void onDeckClick(Deck deck) {
-                // Optional: handle deck click (open, view, etc)
-            }
-
+            public void onDeckClick(Deck deck) { }
             @Override
-            public void onEditDeck(Deck deck) {
-                // Optional: handle deck edit
-            }
-
+            public void onEditDeck(Deck deck) { }
             @Override
-            public void onDeleteDeck(Deck deck) {
-                // Optional: handle deck delete
-            }
+            public void onDeleteDeck(Deck deck) { }
         });
 
         recentDecksList.setLayoutManager(new LinearLayoutManager(getContext()));
         recentDecksList.setAdapter(adapter);
 
         listenToDecksRealtime();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_home, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_logout) {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            requireActivity().finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void listenToDecksRealtime() {

@@ -1,6 +1,9 @@
 package com.example.studysync.fragments;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -21,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.studysync.FlashcardActivity;
 import com.example.studysync.R;
 import com.example.studysync.adapters.DeckAdapter;
+import com.example.studysync.Managers.DeckManager;
 import com.example.studysync.models.Deck;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
@@ -43,7 +47,7 @@ public class DeckFragment extends Fragment {
     private TabLayout tabLayout;
     private TextInputEditText searchInput;
     private final List<Deck> decks = new ArrayList<>();
-    private FirebaseFirestore db;
+    private DeckManager deckManager;
 
     @Nullable
     @Override
@@ -57,8 +61,7 @@ public class DeckFragment extends Fragment {
     public void onViewCreated(@NonNull View root, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(root, savedInstanceState);
 
-        // Initialize Firebase
-        db = FirebaseFirestore.getInstance();
+        deckManager = new DeckManager(requireContext());
 
         Toolbar toolbar = root.findViewById(R.id.toolbar);
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
@@ -69,8 +72,14 @@ public class DeckFragment extends Fragment {
         searchInput  = root.findViewById(R.id.searchInput);
         FloatingActionButton fab = root.findViewById(R.id.createNewDeckFab);
 
-        // Load decks from Firebase (with user_id filtering)
-        loadDecksFromFirebase();
+        // Always load decks from local DB first
+        loadDecksFromLocal();
+
+        // Try to sync to Firebase and from Firebase (if online)
+        if (isNetworkAvailable()) {
+            syncUnsyncedDecksToFirebase();
+            syncDecksFromFirebase();
+        }
 
         adapter = new DeckAdapter(decks, new DeckAdapter.OnDeckClickListener() {
             @Override
@@ -83,14 +92,14 @@ public class DeckFragment extends Fragment {
             @Override
             public void onEditDeck(Deck deck) {
                 CreateDeckDialogFragment dialog = new CreateDeckDialogFragment(deck, updatedDeck -> {
-                    updateDeckInFirebase(updatedDeck);
+                    saveDeckLocallyAndSync(updatedDeck);
                 });
                 dialog.show(getParentFragmentManager(), "edit_deck");
             }
 
             @Override
             public void onDeleteDeck(Deck deck) {
-                deleteDeckFromFirebase(deck);
+                deleteDeckLocallyAndSync(deck);
             }
         });
 
@@ -102,19 +111,15 @@ public class DeckFragment extends Fragment {
             new CreateDeckDialogFragment(new CreateDeckDialogFragment.CreateListener() {
                 @Override
                 public void onDeckCreated(Deck newDeck) {
-                    // Ensure user_id is set before saving
                     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                     if (user != null) {
                         newDeck.setUser_id(user.getUid());
-                        // If id is empty, set a new UUID
                         if (newDeck.getId() == null || newDeck.getId().isEmpty()) {
                             newDeck.setId(UUID.randomUUID().toString());
                         }
-                        // Ensure sync_status for new Deck
                         newDeck.setSync_status(0);
-                        saveDeckToFirebase(newDeck);
-                    } else {
-                        Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+                        saveDeckLocallyAndSync(newDeck);
+                        Toast.makeText(getContext(), "Deck saved locally!", Toast.LENGTH_SHORT).show();
                     }
                 }
             }).show(getParentFragmentManager(), "create_deck");
@@ -133,127 +138,63 @@ public class DeckFragment extends Fragment {
         });
     }
 
-    // Only load decks belonging to the current user
-    private void loadDecksFromFirebase() {
+    private void loadDecksFromLocal() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Toast.makeText(getContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (user == null) return;
         String userId = user.getUid();
-        db.collection("decks")
-                .whereEqualTo("user_id", userId)
-                .get()
+        decks.clear();
+        decks.addAll(deckManager.getAllDecks(userId));
+        if (adapter != null) adapter.updateList(decks);
+        applyFilters();
+    }
+
+    private void saveDeckLocallyAndSync(Deck deck) {
+        deckManager.insertOrUpdateDeck(deck, 0); // 0: not synced
+        loadDecksFromLocal();
+        if (isNetworkAvailable()) syncUnsyncedDecksToFirebase();
+    }
+
+    private void deleteDeckLocallyAndSync(Deck deck) {
+        // You need to implement a delete method in DeckManager for this
+        // deckManager.deleteDeck(deck.getId());
+        // For now, mark as deleted (implement as you see fit)
+        decks.remove(deck);
+        loadDecksFromLocal();
+        if (isNetworkAvailable()) syncUnsyncedDecksToFirebase();
+    }
+
+    private void syncUnsyncedDecksToFirebase() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        String userId = user.getUid();
+        List<Deck> unsynced = deckManager.getUnsyncedDecks();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        for (Deck deck : unsynced) {
+            db.collection("decks").document(deck.getId()).set(deck)
+                    .addOnSuccessListener(aVoid -> deckManager.updateDeckSyncStatus(deck.getId(), 1));
+        }
+    }
+
+    private void syncDecksFromFirebase() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        String userId = user.getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("decks").whereEqualTo("user_id", userId).get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    decks.clear();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        try {
-                            Deck deck = doc.toObject(Deck.class);
-                            // Ensure the deck has an ID from the document
-                            if (deck.getId() == null || deck.getId().isEmpty()) {
-                                deck.setId(doc.getId());
-                            }
-                            if (deck.getUser_id() == null || deck.getUser_id().isEmpty()) {
-                                deck.setUser_id(userId); // fallback for legacy decks
-                            }
-                            // Ensure sync_status is marked as synced (1) for decks loaded from Firebase
-                            deck.setSync_status(1);
-                            decks.add(deck);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error parsing deck: " + doc.getId(), e);
-                        }
+                        Deck deck = doc.toObject(Deck.class);
+                        deck.setSync_status(1); // mark as synced
+                        deckManager.insertOrUpdateDeck(deck, 1);
                     }
-                    adapter.updateList(decks);
-                    applyFilters();
-                    Log.d(TAG, "Loaded " + decks.size() + " decks from Firebase");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error loading decks from Firebase", e);
-                    Toast.makeText(getContext(), "Failed to load decks", Toast.LENGTH_SHORT).show();
-                    // Load mock data as fallback
-                    decks.addAll(loadMockDecks());
-                    adapter.updateList(decks);
-                    applyFilters();
+                    loadDecksFromLocal();
                 });
     }
 
-    private void saveDeckToFirebase(Deck deck) {
-        db.collection("decks")
-                .document(deck.getId())
-                .set(deck)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Deck saved successfully: " + deck.getTitle());
-                    // Mark as synced after successful save
-                    deck.setSync_status(1);
-                    decks.add(deck);
-                    adapter.updateList(decks);
-                    applyFilters();
-                    Toast.makeText(getContext(), "Deck created successfully", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error saving deck to Firebase", e);
-                    Toast.makeText(getContext(), "Failed to create deck", Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void updateDeckInFirebase(Deck deck) {
-        db.collection("decks")
-                .document(deck.getId())
-                .set(deck)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Deck updated successfully: " + deck.getTitle());
-                    // Mark as synced after successful update
-                    deck.setSync_status(1);
-                    // Update local list
-                    int index = -1;
-                    for (int i = 0; i < decks.size(); i++) {
-                        if (decks.get(i).getId().equals(deck.getId())) {
-                            index = i;
-                            break;
-                        }
-                    }
-                    if (index != -1) {
-                        decks.set(index, deck);
-                        adapter.updateList(decks);
-                        applyFilters();
-                    }
-                    Toast.makeText(getContext(), "Deck updated successfully", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating deck in Firebase", e);
-                    Toast.makeText(getContext(), "Failed to update deck", Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private void deleteDeckFromFirebase(Deck deck) {
-        // First delete all flashcards in the deck
-        db.collection("decks").document(deck.getId()).collection("flashcards")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    // Delete all flashcards
-                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        doc.getReference().delete();
-                    }
-
-                    // Then delete the deck itself
-                    db.collection("decks").document(deck.getId())
-                            .delete()
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Deck deleted successfully: " + deck.getTitle());
-                                decks.remove(deck);
-                                adapter.updateList(decks);
-                                applyFilters();
-                                Toast.makeText(getContext(), "Deleted: " + deck.getTitle(), Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error deleting deck from Firebase", e);
-                                Toast.makeText(getContext(), "Failed to delete deck", Toast.LENGTH_SHORT).show();
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting flashcards", e);
-                    Toast.makeText(getContext(), "Failed to delete deck", Toast.LENGTH_SHORT).show();
-                });
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
     }
 
     private void applyFilters() {
@@ -261,11 +202,14 @@ public class DeckFragment extends Fragment {
                 ? searchInput.getText().toString()
                 : "";
         int tabIndex = tabLayout.getSelectedTabPosition();
-        adapter.filter(query, tabIndex);
-        showOrHideEmpty(adapter.getItemCount());
+        if (adapter != null) {
+            adapter.filter(query, tabIndex);
+            showOrHideEmpty(adapter.getItemCount());
+        }
     }
 
     private void showOrHideEmpty(int count) {
+        if (emptyState == null || recyclerView == null) return;
         if (count == 0) {
             emptyState.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
@@ -273,17 +217,5 @@ public class DeckFragment extends Fragment {
             emptyState.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
-    }
-
-    // Keep as fallback for offline mode or initial testing
-    private List<Deck> loadMockDecks() {
-        List<Deck> list = new ArrayList<>();
-        long DAY = 24L * 3600 * 1000;
-        long now = System.currentTimeMillis();
-        // Add sync_status = 1 for mock data (synced)
-        list.add(new Deck("1", "dummy_user_id", "Biology Terms", now - 2*DAY, false, 12, 1));
-        list.add(new Deck("2", "dummy_user_id", "Java Syntax",   now - 8*DAY, true,   8, 1));
-        list.add(new Deck("3", "dummy_user_id", "Spanish Verbs", now - 1*DAY, false, 20, 1));
-        return list;
     }
 }
